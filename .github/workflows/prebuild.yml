@@ -1,0 +1,40 @@
+name: Prebuild Native Modules
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  prebuild-windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm install
+    
+    - name: Verify native modules
+      run: |
+        node -e "try { require('wav'); console.log('✅ wav module loaded'); } catch (e) { console.log('❌ wav module failed:', e.message); }"
+        node -e "try { require('speaker'); console.log('✅ speaker module loaded'); } catch (e) { console.log('❌ speaker module failed:', e.message); }"
+    
+    - name: Find native modules
+      run: |
+        Get-ChildItem -Path node_modules -Recurse -Filter "*.node" | Select-Object FullName
+    
+    - name: Archive native modules
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-native-modules
+        path: |
+          node_modules/wav/build/Release/
+          node_modules/speaker/build/Release/

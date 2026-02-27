@@ -1,0 +1,36 @@
+{
+  "name": "wav-call-system",
+  "version": "1.0.0",
+  "description": "跨平台叫号系统语音播放库，支持普通叫号和大堂经理叫号",
+  "main": "src/index.js",
+  "module": "src/index.js",
+  "bin": {
+    "wav-call": "src/index.js"
+  },
+  "scripts": {
+    "test": "node src/index.js",
+    "start": "node src/index.js",
+    "build": "npm pack"
+  },
+  "keywords": ["wav", "voice", "call-system", "audio", "playback", "queue"],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/wav-call-system.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/wav-call-system/issues"
+  },
+  "homepage": "https://github.com/yourusername/wav-call-system#readme",
+  "dependencies": {
+    "fs-extra": "^11.3.3"
+  },
+  "optionalDependencies": {
+    "speaker": "^0.5.5",
+    "wav": "^1.0.2"
+  },
+  "engines": {
+    "node": ">=12.0.0"
+  }
+}
