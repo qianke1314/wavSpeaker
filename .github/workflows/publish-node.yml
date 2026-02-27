@@ -1,109 +1,106 @@
-name: 'publish-node'
+name: Prebuild Native Modules and Create Release
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
-  create-release:
-    permissions:
-      contents: write
-    runs-on: ubuntu-20.04
-    outputs:
-      release_id: ${{ steps.create-release.outputs.release_id }}
-      upload_url: ${{ steps.create-release.outputs.upload_url }}
-
-    steps:
-      - uses: actions/checkout@v3
-      - name: setup node
-        uses: actions/setup-node@v3
-        with:
-          node-version: 16
-      - name: get version
-        run: echo "PACKAGE_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
-      - name: create release
-        id: create-release
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const { data } = await github.rest.repos.createRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              tag_name: `v${process.env.PACKAGE_VERSION}`,
-              name: `Node Modules v${process.env.PACKAGE_VERSION}`,
-              body: 'Native Node modules for Windows platform.',
-              draft: true,
-              prerelease: false
-            })
-            core.setOutput('release_id', data.id)
-            core.setOutput('upload_url', data.upload_url)
-
-  build-windows-node:
-    needs: create-release
-    permissions:
-      contents: write
+  prebuild-windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: setup node
-        uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 16
+          node-version: '18'
           cache: 'npm'
-      - name: Install build tools
-        run: |
-          npm install --global node-gyp
-          npm install --global windows-build-tools
-      - name: Install dependencies with build
-        run: npm install --build-from-source
+
+      - name: Install dependencies
+        run: npm install
+
       - name: Verify native modules
         run: |
           node -e "try { require('wav'); console.log('✅ wav module loaded'); } catch (e) { console.log('❌ wav module failed:', e.message); }"
           node -e "try { require('speaker'); console.log('✅ speaker module loaded'); } catch (e) { console.log('❌ speaker module failed:', e.message); }"
+
       - name: Find native modules
         run: |
           Get-ChildItem -Path node_modules -Recurse -Filter "*.node" | Select-Object FullName
-      - name: Create output directory
-        run: |
-          New-Item -ItemType Directory -Path ./dist -Force
-          New-Item -ItemType Directory -Path ./dist/wav -Force
-          New-Item -ItemType Directory -Path ./dist/speaker -Force
-      - name: Copy native modules
-        run: |
-          Copy-Item -Path node_modules/wav/build/Release/*.node -Destination ./dist/wav/
-          Copy-Item -Path node_modules/speaker/build/Release/*.node -Destination ./dist/speaker/
+
+      - name: Build package
+        run: npm run build
+
       - name: Archive native modules
-        run: |
-          Compress-Archive -Path ./dist -DestinationPath ./windows-native-modules.zip
-      - name: Upload release asset
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-native-modules
+          path: |
+            node_modules/wav/build/Release/
+            node_modules/speaker/build/Release/
+            *.tgz
+
+  create-release:
+    needs: prebuild-windows
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Get version from package.json
+        id: get-version
+        run: echo "VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-native-modules
+          path: artifacts
+
+      - name: Create Release
+        id: create-release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ env.VERSION }}
+          release_name: Release v${{ env.VERSION }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Assets
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./windows-native-modules.zip
-          asset_name: windows-native-modules.zip
-          asset_content_type: application/zip
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: ./artifacts/*.tgz
+          asset_name: wav-call-system-${{ env.VERSION }}.tgz
+          asset_content_type: application/gzip
 
-  publish-release:
-    permissions:
-      contents: write
-    runs-on: ubuntu-20.04
-    needs: [create-release, build-windows-node]
-
-    steps:
-      - name: publish release
-        id: publish-release
-        uses: actions/github-script@v6
+      - name: Upload Native Modules
+        uses: actions/upload-release-asset@v1
         env:
-          release_id: ${{ needs.create-release.outputs.release_id }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          script: |
-            github.rest.repos.updateRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              release_id: process.env.release_id,
-              draft: false,
-              prerelease: false
-            })
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: ./artifacts/wav/build/Release/wav.node
+          asset_name: wav.node
+          asset_content_type: application/octet-stream
+
+      - name: Upload Speaker Module
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: ./artifacts/speaker/build/Release/speaker.node
+          asset_name: speaker.node
+          asset_content_type: application/octet-stream
