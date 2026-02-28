@@ -23,7 +23,7 @@
     "wav": "^1.0.2"
   },
   "devDependencies": {
-    "node-gyp": "^9.0.0"
+    "node-gyp": "^12.0.0"
   },
   "optionalDependencies": {
     "speaker": "^0.5.5"
