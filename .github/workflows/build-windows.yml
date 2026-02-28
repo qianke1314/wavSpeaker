@@ -42,7 +42,7 @@ jobs:
           npm_config_node_gyp: "C:/hostedtoolcache/windows/node/22.*/x64/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js"
 
       - name: Build
-        run: npm run build
+        run: node-gyp configure --arch=ia32 build
         env:
           MSVS_VERSION: '2022'
           npm_config_node_gyp: "C:/hostedtoolcache/windows/node/22.*/x64/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js"
@@ -50,7 +50,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: build-windows-22
+          name: build-win32-22
           path: build/
 
   release:
