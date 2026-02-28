@@ -1,5 +1,7 @@
 # node-speaker
 
+打包测试
+
 ## Output [PCM audio][pcm] data to the speakers
 
 [![Build Status](https://github.com/TooTallNate/node-speaker/workflows/Node%20CI/badge.svg)](https://github.com/TooTallNate/node-speaker/actions?workflow=Node+CI)
