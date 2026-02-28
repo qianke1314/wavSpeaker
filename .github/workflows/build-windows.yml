@@ -12,7 +12,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        node-version: [14, 16, 18]  # 支持的 Node.js 版本
+        node-version: [14, 16, 18, 20, 22]  # 支持的 Node.js 版本
 
     steps:
       - uses: actions/checkout@v3
@@ -25,11 +25,18 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
 
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v1.1
+
       - name: Install dependencies
         run: npm install
+        env:
+          MSVS_VERSION: '2022'
 
       - name: Build
         run: npm run build
+        env:
+          MSVS_VERSION: '2022'
 
       - name: Rename binary
         id: rename
