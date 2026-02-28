@@ -1,36 +1,44 @@
 {
-  "name": "wav-call-system",
-  "version": "1.0.0",
-  "description": "跨平台叫号系统语音播放库，支持普通叫号和大堂经理叫号",
-  "main": "src/index.js",
-  "module": "src/index.js",
-  "bin": {
-    "wav-call": "src/index.js"
-  },
+  "name": "speaker",
+  "version": "0.5.5",
+  "license": "(MIT AND LGPL-2.1-only)",
+  "description": "Output PCM audio data to the speakers",
+  "author": "Nathan Rajlich <nathan@tootallnate.net> (http://tootallnate.net)",
+  "repository": "TooTallNate/node-speaker",
+  "main": "index.js",
+  "types": "index.d.ts",
   "scripts": {
-    "test": "node src/index.js",
-    "start": "node src/index.js",
-    "build": "npm pack"
+    "test": "standard && node-gyp rebuild --mpg123-backend=dummy && mocha --reporter spec"
   },
-  "keywords": ["wav", "voice", "call-system", "audio", "playback", "queue"],
-  "author": "",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/yourusername/wav-call-system.git"
-  },
-  "bugs": {
-    "url": "https://github.com/yourusername/wav-call-system/issues"
-  },
-  "homepage": "https://github.com/yourusername/wav-call-system#readme",
   "dependencies": {
-    "fs-extra": "^11.3.3"
+    "bindings": "^1.3.0",
+    "buffer-alloc": "^1.1.0",
+    "debug": "^4.0.0"
   },
-  "optionalDependencies": {
-    "speaker": "^0.5.5",
-    "wav": "^1.0.2"
+  "devDependencies": {
+    "@types/node": "^12.12.14",
+    "mocha": "^6.2.2",
+    "standard": "^14.3.1"
   },
   "engines": {
-    "node": ">=12.0.0"
-  }
+    "node": ">=8.6"
+  },
+  "keywords": [
+    "pcm",
+    "audio",
+    "sound",
+    "music",
+    "output",
+    "speaker",
+    "headphone",
+    "alsa",
+    "coreaudio",
+    "openal",
+    "sdl",
+    "portaudio",
+    "jack",
+    "oss",
+    "pulse",
+    "mpg123"
+  ]
 }
