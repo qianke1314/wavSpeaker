@@ -47,20 +47,11 @@ jobs:
           MSVS_VERSION: '2022'
           npm_config_node_gyp: "C:/hostedtoolcache/windows/node/22.*/x64/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js"
 
-      - name: Rename binary
-        id: rename
-        run: |
-          # 重命名二进制文件，包含 Node.js 版本信息
-          $binaryName = "binding-22-win32-x64.node"
-          Move-Item -Path "build\Release\binding.node" -Destination $binaryName
-          echo "BINARY_NAME=$binaryName" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-        shell: powershell
-
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: binding-windows-22
-          path: ${{ steps.rename.outputs.BINARY_NAME }}
+          name: build-windows-22
+          path: build/
 
   release:
     needs: build
