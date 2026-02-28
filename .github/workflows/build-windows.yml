@@ -2,8 +2,10 @@ name: Build Windows Binary
 
 on:
   push:
+    branches:
+      - main
     tags:
-      - 'v*'  # 只在推送版本标签时触发
+      - 'v*'
 
 jobs:
   build:
