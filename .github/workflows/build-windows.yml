@@ -12,7 +12,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        node-version: [14, 16, 18, 20, 22]  # 支持的 Node.js 版本
+        node-version: [22]  # 使用 Node.js 22 版本
 
     steps:
       - uses: actions/checkout@v3
@@ -28,21 +28,30 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v1.1
 
+      - name: Set Visual Studio environment variables
+        run: |
+          echo "VSCMD_START_DIR=%CD%" >> $env:GITHUB_ENV
+          echo "VisualStudioVersion=17.0" >> $env:GITHUB_ENV
+          echo "VS170COMNTOOLS=C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\" >> $env:GITHUB_ENV
+        shell: powershell
+
       - name: Install dependencies
         run: npm install
         env:
           MSVS_VERSION: '2022'
+          npm_config_node_gyp: "C:\hostedtoolcache\windows\node\22.*/x64\node_modules\npm\node_modules\node-gyp\bin\node-gyp.js"
 
       - name: Build
         run: npm run build
         env:
           MSVS_VERSION: '2022'
+          npm_config_node_gyp: "C:\hostedtoolcache\windows\node\22.*/x64\node_modules\npm\node_modules\node-gyp\bin\node-gyp.js"
 
       - name: Rename binary
         id: rename
         run: |
           # 重命名二进制文件，包含 Node.js 版本信息
-          $binaryName = "binding-${{ matrix.node-version }}-win32-x64.node"
+          $binaryName = "binding-22-win32-x64.node"
           Move-Item -Path "build\Release\binding.node" -Destination $binaryName
           echo "BINARY_NAME=$binaryName" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
         shell: powershell
@@ -50,7 +59,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: binding-windows-${{ matrix.node-version }}
+          name: binding-windows-22
           path: ${{ steps.rename.outputs.BINARY_NAME }}
 
   release:
