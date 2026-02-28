@@ -1,6 +1,6 @@
 {
   "name": "wav-call-system",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "跨平台叫号系统语音播放库，支持普通叫号和大堂经理叫号",
   "main": "src/index.js",
   "module": "src/index.js",
