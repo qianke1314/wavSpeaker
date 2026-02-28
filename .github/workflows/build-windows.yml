@@ -1,0 +1,75 @@
+name: Build Windows Binary
+
+on:
+  push:
+    tags:
+      - 'v*'  # 只在推送版本标签时触发
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        node-version: [14, 16, 18]  # 支持的 Node.js 版本
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true  # 确保子模块也被检出
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build
+
+      - name: Rename binary
+        id: rename
+        run: |
+          # 重命名二进制文件，包含 Node.js 版本信息
+          $binaryName = "binding-${{ matrix.node-version }}-win32-x64.node"
+          Move-Item -Path "build\Release\binding.node" -Destination $binaryName
+          echo "BINARY_NAME=$binaryName" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+        shell: powershell
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: binding-windows-${{ matrix.node-version }}
+          path: ${{ steps.rename.outputs.BINARY_NAME }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: artifacts/**/*
+          asset_name: ${{ basename(artifacts/**/*) }}
+          asset_content_type: application/octet-stream
